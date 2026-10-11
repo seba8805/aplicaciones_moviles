@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Movimientos Internos - SPB</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Leaflet: biblioteca de mapas (servicio externo 3, se carga en el navegador) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+</head>
+<body>
+
+  <!-- Barra superior: oculta hasta iniciar sesion -->
+  <header id="topbar" hidden>
+    <strong>Movimientos Internos · SPB</strong>
+    <span><span id="who"></span> <button id="btn-logout" class="link">Salir</button></span>
+  </header>
+
+  <main id="app"></main>
+  <div id="toast" role="status"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

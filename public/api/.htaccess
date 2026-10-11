@@ -1,0 +1,4 @@
+# Todas las rutas /api/... las atiende index.php
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [L]

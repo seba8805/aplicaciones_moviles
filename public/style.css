@@ -1,0 +1,262 @@
+/* =====================================================
+   1. VARIABLES DE COLOR (tema claro y oscuro)
+   ===================================================== */
+:root {
+  --bg: #f3f4f6;      /* fondo de la pagina */
+  --card: #ffffff;    /* fondo de tarjetas e inputs */
+  --fg: #1f2937;      /* color de texto */
+  --mut: #6b7280;     /* texto secundario */
+  --pri: #1e3a5f;     /* color principal */
+  --pri2: #2c5282;    /* color principal al pasar el mouse */
+  --bd: #d1d5db;      /* bordes */
+  --ok: #15803d;      /* éxito */
+  --err: #b91c1c;     /* error */
+}
+
+/* Tema oscuro automatico segun el sistema del usuario */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111827;
+    --card: #1f2937;
+    --fg: #f3f4f6;
+    --mut: #9ca3af;
+    --pri: #3b6ea5;
+    --pri2: #4a82bd;
+    --bd: #374151;
+  }
+}
+
+/* =====================================================
+   2. BASE
+   ===================================================== */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+}
+
+h1,
+h2 {
+  margin-top: 0;
+}
+
+/* =====================================================
+   3. ESTRUCTURA (barra superior y contenedor)
+   ===================================================== */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.7rem 1rem;
+  background: var(--pri);
+  color: #fff;
+}
+
+main {
+  max-width: 960px;
+  margin: 1.5rem auto;
+  padding: 0 1rem;
+}
+
+/* Botones de texto de la barra superior (Menú / Salir) */
+.link {
+  margin-left: 0.6rem;
+  background: none;
+  border: 0;
+  color: #fff;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* =====================================================
+   4. TARJETAS
+   ===================================================== */
+.card {
+  margin-bottom: 1rem;
+  padding: 1.5rem;
+  background: var(--card);
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.13);
+}
+
+/* Variante centrada, usada en el login */
+.center {
+  max-width: 380px;
+  margin: 4rem auto;
+  text-align: center;
+}
+
+/* =====================================================
+   5. FORMULARIOS Y BOTONES
+   ===================================================== */
+label {
+  display: block;
+  margin: 0.7rem 0 0.2rem;
+  font-size: 0.9rem;
+  color: var(--mut);
+}
+
+input,
+select {
+  width: 100%;
+  padding: 0.55rem;
+  border: 1px solid var(--bd);
+  border-radius: 6px;
+  background: var(--card);
+  color: var(--fg);
+  font: inherit;
+}
+
+button.btn {
+  margin: 0.4rem 0.4rem 0 0;
+  padding: 0.6rem 1.1rem;
+  background: var(--pri);
+  border: 0;
+  border-radius: 6px;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+button.btn:hover {
+  background: var(--pri2);
+}
+
+button.sec {
+  background: var(--mut);   /* boton secundario (Volver) */
+}
+
+button.dng {
+  background: var(--err);   /* boton de acción peligrosa (Eliminar) */
+}
+
+/* =====================================================
+   6. DISPOSICIONES (grillas)
+   ===================================================== */
+/* Campos de formulario en columnas que se adaptan al ancho */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.8rem;
+}
+
+/* Botones del menú principal */
+.menu {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.8rem;
+}
+
+.menu button {
+  padding: 1.1rem;
+}
+
+/* =====================================================
+   7. TABLAS
+   ===================================================== */
+.table-wrap {
+  overflow-x: auto;         /* scroll horizontal en pantallas chicas */
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+th,
+td {
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+  border-bottom: 1px solid var(--bd);
+}
+
+th {
+  background: var(--bg);
+}
+
+/* =====================================================
+   8. ESTADÍSTICAS Y ETIQUETAS DE UBICACIÓN
+   ===================================================== */
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.stat {
+  flex: 1;
+  min-width: 140px;
+  padding: 0.8rem;
+  background: var(--bg);
+  border-radius: 8px;
+}
+
+.stat b {
+  display: block;
+  font-size: 1.5rem;
+}
+
+/* Etiqueta de ubicación: amarilla = fuera de celda */
+.tag {
+  padding: 0.1rem 0.5rem;
+  background: #fde68a;
+  color: #78350f;
+  border-radius: 99px;
+  font-size: 0.8rem;
+}
+
+/* Verde = en celda */
+.tag.in {
+  background: #bbf7d0;
+  color: #14532d;
+}
+
+/* =====================================================
+   9. NOTIFICACIÓN (toast)
+   ===================================================== */
+#toast {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.7rem 1.2rem;
+  border-radius: 8px;
+  color: #fff;
+  opacity: 0;               /* oculto por defecto */
+  transition: 0.3s;
+  pointer-events: none;
+}
+
+#toast.show {
+  opacity: 1;
+}
+
+#toast.ok {
+  background: var(--ok);
+}
+
+#toast.err {
+  background: var(--err);
+}
+
+/* =====================================================
+   10. CLIMA Y MAPA (servicios externos)
+   ===================================================== */
+.widgets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem;
+}
+
+.map {
+  height: 200px;
+  border-radius: 8px;
+}
