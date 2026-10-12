@@ -128,7 +128,13 @@ async function vistaPrincipal() {
 
     <div class="card">
       <h2>Internos</h2>
-      <input id="buscar" placeholder="Buscar por legajo, apellido o nombre…">
+      <div style="display:flex; gap:0.5rem; flex-wrap:wrap">
+        <input id="buscar" style="flex:1" placeholder="Buscar por legajo, apellido o nombre…">
+        <select id="filtro-piso" style="max-width:200px">
+          <option value="">Todos los pisos</option>
+          ${config.pisos.map((piso) => `<option value="${piso}">${piso}</option>`).join('')}
+        </select>
+      </div>
       <div id="tabla" style="margin-top:1rem"></div>
     </div>`;
 
@@ -171,8 +177,14 @@ async function cargarServicios() {
 async function cargarInternos() {
   // encodeURIComponent escapa el texto de búsqueda para ponerlo en la URL
   const textoBusqueda = encodeURIComponent(seleccionar('#buscar').value.trim());
-  const internos = await api('/internos?q=' + textoBusqueda);
+  let internos = await api('/internos?q=' + textoBusqueda);
   const puedeEditar = ['admin', 'encargado'].includes(usuario.rol);
+
+  // Filtra en memoria si se seleccionó un piso específico
+  const pisoSeleccionado = seleccionar('#filtro-piso')?.value;
+  if (pisoSeleccionado) {
+    internos = internos.filter((interno) => interno.piso === pisoSeleccionado);
+  }
 
   // Lista desplegable del formulario de movimientos
   seleccionar('[name=interno]').innerHTML = internos.map((interno) =>
@@ -228,6 +240,7 @@ function cancelarEdicion() {
 function enlazarEventos(puedeEditar) {
   enlazarNav();
   seleccionar('#buscar').oninput = run(cargarInternos);
+  seleccionar('#filtro-piso').onchange = run(cargarInternos);
 
   if (puedeEditar) {
     // POST (alta) o PUT (modificación) según haya un interno en edición
