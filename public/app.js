@@ -286,11 +286,15 @@ function enlazarEventos(puedeEditar) {
 }
 
 // ---------- Navegación entre pantallas (según el rol) ----------
-const VISTAS = { internos: vistaPrincipal, recuento: vistaRecuento, historial: vistaHistorial, usuarios: vistaUsuarios };
+const VISTAS = { internos: vistaPrincipal, recuento: vistaRecuento, historial: vistaHistorial, registro: ListarRegistrosDeActividades, usuarios: vistaUsuarios };
 
 function nav(actual) {
   const items = [['internos', 'Internos'], ['recuento', 'Recuento']];
-  if (['admin', 'encargado'].includes(usuario.rol)) items.push(['historial', 'Historial']);
+  if (['admin', 'encargado'].includes(usuario.rol)) 
+    {
+      items.push(['historial', 'Historial de altas']);
+      items.push(['registro', 'Registro de Actividades']);
+    }
   if (usuario.rol === 'admin') items.push(['usuarios', 'Usuarios']);
   return `<div class="card">${items.map(([vista, titulo]) =>
     `<button class="btn ${vista === actual ? '' : 'sec'}" data-vista="${vista}">${titulo}</button>`).join('')}</div>`;
@@ -343,6 +347,31 @@ async function vistaHistorial() {
       filas.map((registro) => [esc(registro.fecha), esc(registro.tipo), esc(registro.legajo), esc(registro.interno), esc(registro.detalles), esc(registro.usuario)]));
   });
   seleccionar('#filtro').oninput = cargar;
+  await cargar();
+}
+
+// Lista las entradas y salidas de las actividades.
+async function ListarRegistrosDeActividades() {
+  app.innerHTML = `${nav('registro-actividades')}<div class="card"><h2>Registro de entradas y salidas de actividades</h2>
+    <input id="filtro-legajo" placeholder="Filtrar por legajo…"><div id="reg-act" style="margin-top:1rem"></div></div>`;
+  enlazarNav();
+
+  const cargar = run(async () => {
+    const filas = await api('/registro-actividades?legajo=' + encodeURIComponent(seleccionar('#filtro-legajo').value.trim()));
+    seleccionar('#reg-act').innerHTML = tabla([
+      'Fecha', 'Acción', 'Actividad', 'Destino', 'Legajo', 'Interno', 'Registró'
+    ], filas.map((fila) => [
+      esc(fila.fecha),
+      esc(fila.accion === 'salida' ? 'Salida' : 'Regreso'),
+      esc(fila.actividad),
+      esc(fila.subactividad ?? '-'),
+      esc(fila.legajo),
+      esc(fila.nombre),
+      esc(fila.usuario)
+    ]));
+  });
+
+  seleccionar('#filtro-legajo').oninput = cargar;
   await cargar();
 }
 

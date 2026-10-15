@@ -46,3 +46,19 @@ CREATE TABLE IF NOT EXISTS historial (               -- altas y bajas (se conser
   usuario  VARCHAR(50)  NOT NULL,
   INDEX (legajo)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Cree una nueva tabla para hacer un registro de movimientos de e/s de las actividades
+CREATE TABLE IF NOT EXISTS registro_actividades (
+  id           INT AUTO_INCREMENT PRIMARY KEY,
+  interno_id   INT         NOT NULL,
+  legajo       VARCHAR(20) NOT NULL,
+  nombre       VARCHAR(150) NOT NULL,
+  accion       ENUM('salida','regreso') NOT NULL,
+  actividad    VARCHAR(30) NOT NULL,
+  subactividad VARCHAR(40) NULL,
+  fecha        DATETIME    NOT NULL,
+  usuario      VARCHAR(50)  NOT NULL,
+  INDEX (legajo),
+  INDEX (fecha),
+  FOREIGN KEY (interno_id) REFERENCES internos(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

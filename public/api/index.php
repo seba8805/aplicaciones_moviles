@@ -98,6 +98,25 @@ function registrarHistorial(PDO $conexion, array $datosInterno, string $tipo, st
 
 
 
+// Agrega la actividad al registro en la base de datos
+function registrarActividad(PDO $conexion, array $interno, string $accion, string $actividad, ?string $subactividad): void
+{
+    $consulta = $conexion->prepare(
+        'INSERT INTO registro_actividades (interno_id, legajo, nombre, accion, actividad, subactividad, fecha, usuario) VALUES (:id, :leg, :nombre, :accion, :actividad, :subactividad, :fecha, :usuario)'
+    );
+    $consulta->execute([
+        ":id" => $interno['id'],
+        ":leg" => $interno['legajo'],
+        ":nombre" => "{$interno['apellido_paterno']} {$interno['apellido_materno']}, {$interno['nombres']}",
+        ":accion" => $accion,
+        ":actividad" => $actividad,
+        ":subactividad" => $subactividad,
+        ":fecha" => date('Y-m-d H:i:s'),
+        ":usuario" => $_SESSION['usuario']
+    ]);
+}
+
+// Enrutador 
 // Enrutador 
 try {
     // Abre o recupera la sesion por cookie
@@ -179,7 +198,22 @@ try {
         responder(200, $consulta->fetchAll());
     }
 
+    // Actualiza la lista de los registros segun el legajo ingresado en el input
+    if ($recurso === 'registro-actividades' && $metodo === 'GET') {
+        exigirRol(['admin', 'encargado']);
+   
+        $consulta = db()->prepare(
+            'SELECT fecha, accion, actividad, subactividad, legajo, nombre, usuario
+            FROM registro_actividades
+            WHERE legajo LIKE ?
+            ORDER BY id DESC 
+            LIMIT 50');
+        $consulta->execute(['%' . txt($_GET['legajo'] ?? '') . '%']);
+        responder(200, $consulta->fetchAll());
+    }
 
+  
+    
 
     // Usuarios (solo admin)
     if ($recurso === 'usuarios') {
@@ -322,17 +356,30 @@ try {
             }
             db()->prepare('INSERT INTO movimientos (interno_id, actividad, subactividad, salida, usuario) VALUES (?, ?, ?, ?, ?)')
                 ->execute([(int)$id, $actividad, $subactividad, date('Y-m-d H:i:s'), $_SESSION['usuario']]);
+            
+            // registra la salida de la actividad
+            $conexion = db();
+            registrarActividad($conexion, $interno, 'salida', $actividad, $subactividad);
             responder(201, buscarInterno((int)$id));
         }
 
         if ($id !== null && $accion === 'regreso' && $metodo === 'POST') {
+            // Obtener datos del movimiento actual para registrar en el registro de actividades
+            $movimiento = db()->prepare("SELECT actividad, subactividad FROM movimientos WHERE interno_id = ? AND regreso IS NULL LIMIT 1");
+            $movimiento->execute([(int)$id]);
+            $datosMov = $movimiento->fetch();
+            
             if (buscarInterno((int)$id)['actividad'] === null) {
                 throw new ApiError(409, 'No hay salida pendiente');
             }
             // Cierra la salida pendiente poniendole la hora de regreso
             db()->prepare('UPDATE movimientos SET regreso = ? WHERE interno_id = ? AND regreso IS NULL')
                 ->execute([date('Y-m-d H:i:s'), (int)$id]);
-            responder(200, buscarInterno((int)$id));
+
+            // Registrar en el regreso de la actividad
+            $interno = buscarInterno((int)$id);
+            registrarActividad(db(), $interno, 'regreso', $datosMov['actividad'] ?? '', $datosMov['subactividad'] ?? '');
+            responder(200, $interno);
         }
     }
 
