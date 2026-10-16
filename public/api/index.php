@@ -124,7 +124,7 @@ try {
     // Metodo HTTP del pedido: GET, POST, PUT o DELETE
     $metodo = $_SERVER['REQUEST_METHOD'];
     // Quita el prefijo /api: /api/internos/5 --> /internos/5
-    $ruta   = preg_replace('#^/api#', '', parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+    $ruta   = preg_replace('#^.*/api#', '', parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
     // Divide la ruta en segmentos: ['internos', '5']
     $segmentosRuta      = array_values(array_filter(explode('/', $ruta), fn($segmento) => $segmento !== ''));
     // recurso = 'internos', id = '5', accion = 'salida' (si existe)
@@ -394,3 +394,5 @@ try {
     error_log($falla);                                                   // el detalle va al log, no al cliente
     responder(500, ['error' => 'Error interno del servidor']);
 }
+
+

@@ -26,7 +26,7 @@ function toast(mensaje, ok = true) {
 // Llama a la API. Si respuesta.ok es false, lanza un Error con el mensaje del servidor
 async function api(ruta, { method = 'GET', body } = {}) {
   // fetch: pedido HTTP al backend sin recargar la página
-  const respuesta = await fetch('/api' + ruta, {
+  const respuesta = await fetch('api' + ruta, {
     method,
     headers: { 'Content-Type': 'application/json' },
     body: body ? JSON.stringify(body) : undefined,
