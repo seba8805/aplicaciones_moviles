@@ -1,9 +1,10 @@
 <?php
+declare(strict_types=1);
+
 // SERVICIOS EXTERNOS (se llaman desde el backend)
 // Nominatim / OpenStreetMap -> geocodificacion de la dirección
 // Open-Meteo                -> clima actual
 // Ninguno requiere clave. Si alguno falla devuelven null y la app sigue funcionando.
-declare(strict_types=1);
 
 // GET a una API JSON con timeout corto; null ante cualquier falla
 function httpJson(string $url): ?array
@@ -76,4 +77,13 @@ function climaActual(float $latitud, float $longitud): ?array
         // Devuelve solo los datos que usa el frontend, o null si no hubo respuesta
         return $datosActuales ? ['temperatura' => $datosActuales['temperature_2m'], 'viento' => $datosActuales['wind_speed_10m'], 'codigo' => $datosActuales['weather_code']] : null;
     });
+}
+
+// Servicios externos degradan a null si fallan
+function manejarServicios(): void
+{
+    exigirLogin();
+    $ubicacion = ubicacionEstablecimiento();
+    // Si no hay ubicacion el clima es null; igual responde 200 (degradacion elegante)
+    responder(200, ['ubicacion' => $ubicacion, 'clima' => $ubicacion ? climaActual($ubicacion['lat'], $ubicacion['lon']) : null]);
 }
