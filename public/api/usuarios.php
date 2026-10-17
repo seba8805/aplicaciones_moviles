@@ -37,8 +37,12 @@ function manejarUsuarios(string $metodo, ?string $id): void
         }
 
         guardar(
-            fn() => db()->prepare('INSERT INTO usuarios (usuario, hash, rol) VALUES (?, ?, ?)')
-                ->execute([$nombreUsuarioNuevo, password_hash($contrasenaNueva, PASSWORD_DEFAULT), $rol]),
+            fn() => db()->prepare('INSERT INTO usuarios (usuario, hash, rol) VALUES (:usuario, :hash, :rol)')
+                ->execute([
+                    ':usuario' => $nombreUsuarioNuevo,
+                    ':hash'    => password_hash($contrasenaNueva, PASSWORD_DEFAULT),
+                    ':rol'     => $rol,
+                ]),
             'usuario',
             'Ya existe un usuario con ese nombre'
         );
@@ -47,8 +51,8 @@ function manejarUsuarios(string $metodo, ?string $id): void
 
     // Borra un usuario 
     if ($id !== null && $metodo === 'DELETE') {
-        $consulta = db()->prepare('SELECT usuario FROM usuarios WHERE id = ?');
-        $consulta->execute([(int)$id]);
+        $consulta = db()->prepare('SELECT usuario FROM usuarios WHERE id = :id');
+        $consulta->execute([':id' => (int)$id]);
         $nombreUsuarioABorrar = $consulta->fetchColumn();
         if ($nombreUsuarioABorrar === false) {
             throw new ApiError(404, 'Usuario no encontrado');
@@ -57,7 +61,8 @@ function manejarUsuarios(string $metodo, ?string $id): void
             throw new ApiError(409, 'No puede eliminarse a si mismo');
         }
 
-        db()->prepare('DELETE FROM usuarios WHERE id = ?')->execute([(int)$id]);
+        db()->prepare('DELETE FROM usuarios WHERE id = :id')
+            ->execute([':id' => (int)$id]);
         responder(200, ['ok' => true, 'mensaje' => 'Usuario eliminado']);
     }
 }

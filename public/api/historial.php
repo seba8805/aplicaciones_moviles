@@ -23,7 +23,7 @@ function manejarHistorial(): void
     exigirRol(['admin', 'encargado']);
     // LIKE con % filtra por parte del legajo; LIMIT 200 acota la respuesta
     $consulta = db()->prepare('SELECT id, legajo, interno, tipo, fecha, detalles, usuario FROM historial
-        WHERE legajo LIKE ? ORDER BY id DESC LIMIT 200');
-    $consulta->execute(['%' . txt($_GET['legajo'] ?? '') . '%']);
+        WHERE legajo LIKE :legajo ORDER BY id DESC LIMIT 200');
+    $consulta->execute([':legajo' => '%' . txt($_GET['legajo'] ?? '') . '%']);
     responder(200, $consulta->fetchAll());
 }

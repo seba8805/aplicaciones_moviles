@@ -42,11 +42,11 @@ function manejarLogin(): void
             error_log('Falta definir ADMIN_PASSWORD: no hay usuarios y no se puede crear el admin');
             throw new ApiError(500, 'Sistema sin configurar: falta definir ADMIN_PASSWORD en el servidor');
         }
-        $conexion->prepare("INSERT INTO usuarios (usuario, hash, rol) VALUES ('admin', ?, 'admin')")
-            ->execute([password_hash($contrasenaAdmin, PASSWORD_DEFAULT)]);
+        $conexion->prepare("INSERT INTO usuarios (usuario, hash, rol) VALUES ('admin', :hash, 'admin')");
+        $conexion->execute([':hash' => password_hash($contrasenaAdmin, PASSWORD_DEFAULT)]);
     }
-    $consulta = $conexion->prepare('SELECT usuario, hash, rol FROM usuarios WHERE usuario = ?');
-    $consulta->execute([txt($datosRecibidos['usuario'] ?? null)]);
+    $consulta = $conexion->prepare('SELECT usuario, hash, rol FROM usuarios WHERE usuario = :usuario');
+    $consulta->execute([':usuario' => txt($datosRecibidos['usuario'] ?? null)]);
     $usuarioEncontrado = $consulta->fetch();
     // password_verify compara contra el hash; el mismo mensaje si falla el usuario o la clave (no revela cual)
     if (!$usuarioEncontrado || !password_verify(txt($datosRecibidos['password'] ?? null), $usuarioEncontrado['hash'])) {

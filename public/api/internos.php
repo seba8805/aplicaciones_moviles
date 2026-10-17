@@ -81,9 +81,14 @@ function manejarInternos(string $metodo, ?string $id, ?string $accion): void
     // Lista los internos
     if ($id === null && $metodo === 'GET') {
         $textoBusqueda = '%' . txt($_GET['q'] ?? '') . '%';
-        $consulta = db()->prepare(SQL_INTERNOS . ' WHERE i.legajo LIKE ? OR i.apellido_paterno LIKE ?
-            OR i.apellido_materno LIKE ? OR i.nombres LIKE ? ORDER BY i.piso, i.celda, i.apellido_paterno');
-        $consulta->execute([$textoBusqueda, $textoBusqueda, $textoBusqueda, $textoBusqueda]);
+        $consulta = db()->prepare(SQL_INTERNOS . ' WHERE i.legajo LIKE :legajo OR i.apellido_paterno LIKE :apellido_paterno
+            OR i.apellido_materno LIKE :apellido_materno OR i.nombres LIKE :nombres ORDER BY i.piso, i.celda, i.apellido_paterno');
+        $consulta->execute([
+            ':legajo'            => $textoBusqueda,
+            ':apellido_paterno'  => $textoBusqueda,
+            ':apellido_materno'  => $textoBusqueda,
+            ':nombres'           => $textoBusqueda,
+        ]);
         responder(200, $consulta->fetchAll());
     }
 
@@ -133,9 +138,10 @@ function manejarInternos(string $metodo, ?string $id, ?string $accion): void
         if ($errores) {
             throw new ApiError(422, 'Datos invalidos', $errores);
         }
-        guardar(fn() => db()->prepare('UPDATE internos SET legajo=:legajo, apellido_paterno=:apellido_paterno,
-            apellido_materno=:apellido_materno, nombres=:nombres, piso=:piso, celda=:celda WHERE id=:id')
-            ->execute($datosValidados + ['id' => (int)$id]));
+        guardar(fn() => 
+            db()->prepare('UPDATE internos SET legajo=:legajo, apellido_paterno=:apellido_paterno,
+                        apellido_materno=:apellido_materno, nombres=:nombres, piso=:piso, celda=:celda WHERE id=:id')
+                ->execute($datosValidados + ['id' => (int)$id]));
         responder(200, buscarInterno((int)$id));
     }
 
@@ -147,7 +153,8 @@ function manejarInternos(string $metodo, ?string $id, ?string $accion): void
         $conexion->beginTransaction();
         try {
             registrarHistorial($conexion, $interno, 'baja', txt($_GET['motivo'] ?? '') ?: 'Baja');
-            $conexion->prepare('DELETE FROM internos WHERE id = ?')->execute([(int)$id]);
+            $conexion->prepare('DELETE FROM internos WHERE id = :id')
+                     ->execute([':id' => (int)$id]);
             $conexion->commit();
         } catch (Throwable $falla) {
             $conexion->rollBack();
@@ -168,8 +175,14 @@ function manejarInternos(string $metodo, ?string $id, ?string $accion): void
         if ($interno['actividad'] !== null) {
             throw new ApiError(409, 'El interno ya tiene una salida pendiente de regreso');
         }
-        db()->prepare('INSERT INTO movimientos (interno_id, actividad, subactividad, salida, usuario) VALUES (?, ?, ?, ?, ?)')
-            ->execute([(int)$id, $actividad, $subactividad, date('Y-m-d H:i:s'), $_SESSION['usuario']]);
+        db()->prepare('INSERT INTO movimientos (interno_id, actividad, subactividad, salida, usuario) VALUES (:interno_id, :actividad, :subactividad, :salida, :usuario)')
+            ->execute([
+                ':interno_id' => (int)$id,
+                ':actividad'  => $actividad,
+                ':subactividad' => $subactividad,
+                ':salida'     => date('Y-m-d H:i:s'),
+                ':usuario'    => $_SESSION['usuario'],
+            ]);
 
         // registra la actividad en la base de datos
         registrarActividad(db(), $interno, 'salida', $actividad, $subactividad);
@@ -178,8 +191,8 @@ function manejarInternos(string $metodo, ?string $id, ?string $accion): void
 
     // Registra el regreso de una actividad de un interno
     if ($id !== null && $accion === 'regreso' && $metodo === 'POST') {
-        $movimiento = db()->prepare('SELECT actividad, subactividad FROM movimientos WHERE interno_id = ? AND regreso IS NULL LIMIT 1');
-        $movimiento->execute([(int)$id]);
+        $movimiento = db()->prepare('SELECT actividad, subactividad FROM movimientos WHERE interno_id = :interno_id AND regreso IS NULL LIMIT 1');
+        $movimiento->execute([':interno_id' => (int)$id]);
         $datosMov = $movimiento->fetch();
 
         if (buscarInterno((int)$id)['actividad'] === null) {
@@ -187,8 +200,11 @@ function manejarInternos(string $metodo, ?string $id, ?string $accion): void
         }
 
         // Cierra la salida poniendo la hora de regreso
-        db()->prepare('UPDATE movimientos SET regreso = ? WHERE interno_id = ? AND regreso IS NULL')
-            ->execute([date('Y-m-d H:i:s'), (int)$id]);
+        db()->prepare('UPDATE movimientos SET regreso = :regreso WHERE interno_id = :interno_id AND regreso IS NULL')
+            ->execute([
+                ':regreso'     => date('Y-m-d H:i:s'),
+                ':interno_id'  => (int)$id,
+            ]);
 
         // Registro el regreso en la base de datos
         $interno = buscarInterno((int)$id);

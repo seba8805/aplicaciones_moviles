@@ -29,9 +29,9 @@ function manejarRegistroActividades(): void
     $consulta = db()->prepare(
         'SELECT fecha, accion, actividad, subactividad, legajo, nombre, usuario
         FROM registro_actividades
-        WHERE legajo LIKE ?
+        WHERE legajo LIKE :legajo
         ORDER BY id DESC 
         LIMIT 50');
-    $consulta->execute(['%' . txt($_GET['legajo'] ?? '') . '%']);
+    $consulta->execute([':legajo' => '%' . txt($_GET['legajo'] ?? '') . '%']);
     responder(200, $consulta->fetchAll());
 }
