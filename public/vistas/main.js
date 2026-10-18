@@ -29,10 +29,15 @@ export async function vistaPrincipal() {
         <div><label>Apellido materno</label><input name="apellido_materno" required></div>
         <div><label>Nombres</label><input name="nombres" required></div>
         <div><label>Piso</label><select name="piso">${state.config.pisos.map((nombrePiso) => `<option>${nombrePiso}</option>`).join('')}</select></div>
-        <div><label>Celda (1-10)</label><input name="celda" type="number" value="1"></div>
+        <div><label>Celda (1-10)</label><input name="celda" type="number" min="1" max="10" value="1"></div>
       </form>
-      <button class="btn" form="f-interno" id="btn-guardar">Guardar</button>
-      <button class="btn sec" id="btn-cancelar" hidden>Cancelar edición</button>
+      <p id="aviso-legajo" style="margin-top:0.75rem; color:#f87171; font-weight:500;" hidden>
+        Ya existe un interno con ese legajo: valor duplicado.
+      </p>
+      <div style="margin-top:1rem; display:flex; gap:0.5rem;">
+        <button class="btn sec" form="f-interno" id="btn-guardar" disabled>Guardar</button>
+        <button class="btn sec" id="btn-cancelar" hidden>Cancelar edición</button>
+      </div>
     </div>` : ''}
 
     <div class="card">
@@ -116,7 +121,7 @@ export async function cargarInternos() {
     seleccionar('#titulo-form').textContent = 'Modificar interno ' + interno.legajo;
     seleccionar('#btn-cancelar').hidden = false;
     formulario.scrollIntoView({ behavior: 'smooth' });
-    actualizarFormularioMovimiento();
+    validarFormularioInterno()
   }));
 
   // Eliminar (DELETE)
@@ -128,6 +133,41 @@ export async function cargarInternos() {
     toast('Interno dado de baja');
     await cargarInternos();
   })));
+}
+
+// Comprueba que todos los campos obligatorios tengan valor y que el legajo no esté duplicado
+function validarFormularioInterno() {
+  const formulario = seleccionar('#f-interno');
+  if (!formulario) return;
+
+  const legajo = formulario.legajo.value.trim();
+  const apellidoPaterno = formulario.apellido_paterno.value.trim();
+  const apellidoMaterno = formulario.apellido_materno.value.trim();
+  const nombres = formulario.nombres.value.trim();
+  const celda = formulario.celda.value.trim();
+  const aviso = seleccionar('#aviso-legajo');
+  const btnGuardar = seleccionar('#btn-guardar');
+  const esDuplicado = internosCargados.some((i) => i.legajo === legajo && i.id !== editandoId);
+  if (aviso) aviso.hidden = !esDuplicado || legajo === '';
+  const camposCompletos = 
+    legajo !== '' && 
+    apellidoPaterno !== '' && 
+    apellidoMaterno !== '' && 
+    nombres !== '' && 
+    celda !== '' && 
+    Number(celda) >= 1 && 
+    Number(celda) <= 10;
+
+  const esValido = camposCompletos && !esDuplicado;
+
+  if (btnGuardar) {
+    btnGuardar.disabled = !esValido;
+    if (esValido) {
+      btnGuardar.classList.remove('sec'); // Vuelve al azul principal
+    } else {
+      btnGuardar.classList.add('sec');    // Se pone gris
+    }
+  }
 }
 
 // Desactiva actividad/destino si el interno seleccionado ya está fuera de su celda
@@ -163,6 +203,7 @@ export function cancelarEdicion() {
   seleccionar('#f-interno').reset();
   seleccionar('#titulo-form').textContent = 'Alta de interno';
   seleccionar('#btn-cancelar').hidden = true;
+  validarFormularioInterno();
 }
 
 // ---------- Eventos de la pantalla principal ----------
@@ -189,6 +230,14 @@ export function enlazarEventos(puedeEditar) {
       cancelarEdicion();
       await cargarInternos();
     });
+    seleccionar('#f-interno').oninput = (evento) => {
+      const formulario = evento.currentTarget;
+      if (evento.target.name === 'celda') {
+        if (Number(formulario.celda.value) > 10) formulario.celda.value = 10;
+        if (Number(formulario.celda.value) < 1 && formulario.celda.value !== '') formulario.celda.value = 1;
+      }
+      validarFormularioInterno();
+    };
     seleccionar('#btn-cancelar').onclick = cancelarEdicion;
   }
 
