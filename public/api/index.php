@@ -18,6 +18,13 @@ require __DIR__ . '/usuarios.php';
 require __DIR__ . '/historial.php';
 require __DIR__ . '/actividad.php';
 require __DIR__ . '/servicios.php';
+require __DIR__ . '/init_db.php';
+
+// Valida variables de entorno e inicializa la base de datos si es necesario
+exigirEnv('DB_HOST');
+exigirEnv('DB_NAME');
+exigirEnv('DB_USER');
+asegurarTablas();
 
 // Enrutador 
 try {
