@@ -1,0 +1,11 @@
+aplicacionesmoviles-production.up.railway.app
+
+root * /public
+
+file_server
+
+@api {
+    path /api/*
+}
+
+php_fastcgi @api 127.0.0.1:9000
