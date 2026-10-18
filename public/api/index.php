@@ -20,14 +20,14 @@ require __DIR__ . '/actividad.php';
 require __DIR__ . '/servicios.php';
 require __DIR__ . '/init_db.php';
 
-// Valida variables de entorno e inicializa la base de datos si es necesario
-exigirEnv('DB_HOST');
-exigirEnv('DB_NAME');
-exigirEnv('DB_USER');
-asegurarTablas();
-
-// Enrutador 
+$fase = 'inicializacion';
 try {
+    exigirEnv('DB_HOST');
+    exigirEnv('DB_NAME');
+    exigirEnv('DB_USER');
+    asegurarTablas();
+
+    $fase = 'procesamiento de solicitud';
     // Abre o recupera la sesion por cookie
     iniciarSesion();
     // Metodo HTTP del pedido: GET, POST, PUT o DELETE
@@ -81,9 +81,26 @@ try {
 
 // Errores esperados: se responden con su propio codigo (400, 401, 403, 404, 409, 422)
 } catch (ApiError $errorApi) {
+    if ($errorApi->codigoHttp >= 500) {
+        error_log(sprintf('Fallo de %s (HTTP %d): %s', $fase, $errorApi->codigoHttp, $errorApi->getMessage()));
+    }
     responder($errorApi->codigoHttp, ['error' => $errorApi->getMessage()] + ($errorApi->detalles ? ['detalles' => $errorApi->detalles] : []));
 // Cualquier otro fallo: 500 generico; el detalle va al log del servidor, nunca al usuario
 } catch (Throwable $falla) {
-    error_log((string)$falla);                                           // el detalle va al log, no al cliente
+    $mensaje = $falla->getMessage();
+    foreach (['DB_USER', 'DB_PASS', 'ADMIN_PASSWORD'] as $variableSecreta) {
+        $secreto = getenv($variableSecreta);
+        if ($secreto !== false && $secreto !== '') {
+            $mensaje = str_replace($secreto, '[REDACTED]', $mensaje);
+        }
+    }
+    error_log(sprintf(
+        'Fallo de %s (%s) en %s:%d: %s',
+        $fase,
+        get_class($falla),
+        basename($falla->getFile()),
+        $falla->getLine(),
+        $mensaje
+    ));
     responder(500, ['error' => 'Error interno del servidor']);
 }

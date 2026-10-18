@@ -7,7 +7,6 @@ function exigirEnv(string $nombre): string
 {
     $valor = getenv($nombre);
     if ($valor === false || $valor === '') {
-        error_log("Falta variable de entorno: $nombre");
         throw new ApiError(500, "Sistema sin configurar: falta definir $nombre en el servidor");
     }
     return $valor;
@@ -45,4 +44,6 @@ function asegurarTablas(): void
             $conexion->exec($stmt);
         }
     }
+
+    error_log('Esquema MySQL inicializado desde sql/database.sql');
 }

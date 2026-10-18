@@ -38,12 +38,11 @@ function manejarLogin(): void
     if ($cantidadUsuarios === 0) {
         $contrasenaAdmin = getenv('ADMIN_PASSWORD');
         if (!$contrasenaAdmin) {
-            // Falla de configuracion del servidor: se registra en el log y se avisa con un 500
-            error_log('Falta definir ADMIN_PASSWORD: no hay usuarios y no se puede crear el admin');
+            // Falla de configuracion del servidor: se avisa con un 500 y el router la registra.
             throw new ApiError(500, 'Sistema sin configurar: falta definir ADMIN_PASSWORD en el servidor');
         }
-        $conexion->prepare("INSERT INTO usuarios (usuario, hash, rol) VALUES ('admin', :hash, 'admin')");
-        $conexion->execute([':hash' => password_hash($contrasenaAdmin, PASSWORD_DEFAULT)]);
+        $crearAdmin = $conexion->prepare("INSERT INTO usuarios (usuario, hash, rol) VALUES ('admin', :hash, 'admin')");
+        $crearAdmin->execute([':hash' => password_hash($contrasenaAdmin, PASSWORD_DEFAULT)]);
     }
     $consulta = $conexion->prepare('SELECT usuario, hash, rol FROM usuarios WHERE usuario = :usuario');
     $consulta->execute([':usuario' => txt($datosRecibidos['usuario'] ?? null)]);
