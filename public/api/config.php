@@ -62,5 +62,3 @@ function cargarEnv(string $ruta): void
 }
 // .env en la carpeta raíz del proyecto
 cargarEnv(__DIR__ . '/../../.env');
-
-                         
