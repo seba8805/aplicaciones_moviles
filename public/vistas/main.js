@@ -70,8 +70,26 @@ export async function vistaPrincipal() {
         </select>
       </div>
       <div id="tabla" style="margin-top:1rem"></div>
-    </div>`;
+    </div>
 
+    <!-- Confirmación de eliminación -->
+    <div id="modal-eliminar" style="position:fixed; inset:0; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; z-index:9999;" hidden>
+      <div style="background:#1e293b; border:1px solid #334155; border-radius:8px; padding:1.5rem; max-width:420px; width:90%; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
+        <h3 style="margin:0 0 0.5rem; font-size:1.15rem; color:#f8fafc;">¿Dar de baja a este interno?</h3>
+        <p style="margin:0 0 1.25rem; font-size:0.9rem; color:#94a3b8; line-height:1.4;">
+          Esta acción es permanente y eliminará todos sus movimientos.
+        </p>
+        <div style="margin-bottom:1.25rem;">
+          <label style="display:block; font-size:0.8rem; color:#cbd5e1; margin-bottom:0.25rem;">Motivo de la baja (opcional):</label>
+          <input id="motivo-baja" value="Traslado" style="width:100%; box-sizing:border-box;">
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+          <button type="button" class="btn sec" id="btn-cancelar-eliminar">Cancelar</button>
+          <button type="button" class="btn" id="btn-confirmar-eliminar" style="background:#ef4444; border-color:#dc2626;">Eliminar</button>
+        </div>
+      </div>
+    </div>`;
+    
   enlazarEventos(puedeEditar);
   await cargarInternos();
   cargarServicios();
@@ -125,14 +143,49 @@ export async function cargarInternos() {
   }));
 
   // Eliminar (DELETE)
-  document.querySelectorAll('[data-borrar]').forEach((boton) => (boton.onclick = run(async () => {
-    if (!confirm('¿Dar de baja a este interno? Se eliminarán sus movimientos.')) return;
-    const motivo = prompt('Motivo de la baja (opcional):', 'Traslado');
-    if (motivo === null) return;                                  // canceló
-    await api('/internos/' + boton.dataset.borrar + '?motivo=' + encodeURIComponent(motivo), { method: 'DELETE' });
-    toast('Interno dado de baja');
-    await cargarInternos();
-  })));
+  document.querySelectorAll('[data-borrar]').forEach((boton) => (boton.onclick = async () => {
+    try {
+        const motivo = await pedirConfirmacionBaja();
+        if (motivo === null) return; // Canceló en el modal
+
+        await api('/internos/' + boton.dataset.borrar + '?motivo=' + encodeURIComponent(motivo), { method: 'DELETE' });
+        toast('Interno dado de baja');
+        await cargarInternos();
+      } catch (error) {
+        toast('Error al eliminar: ' + error.message);
+      }
+  }));
+}
+
+function pedirConfirmacionBaja() {
+  return new Promise((resolve) => {
+    const modal = seleccionar('#modal-eliminar');
+    const inputMotivo = seleccionar('#motivo-baja');
+    const btnConfirmar = seleccionar('#btn-confirmar-eliminar');
+    const btnCancelar = seleccionar('#btn-cancelar-eliminar');
+
+    if (inputMotivo) inputMotivo.value = 'Traslado';
+    modal.style.display = 'flex';
+
+    btnConfirmar.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      modal.style.display = 'none';
+      btnConfirmar.onclick = null;
+      btnCancelar.onclick = null;
+      const motivo = inputMotivo ? inputMotivo.value.trim() : '';
+      resolve(motivo);
+    };
+
+    btnCancelar.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      modal.style.display = 'none';
+      btnConfirmar.onclick = null;
+      btnCancelar.onclick = null;
+      resolve(null);
+    };
+  });
 }
 
 // Comprueba que todos los campos obligatorios tengan valor y que el legajo no esté duplicado
