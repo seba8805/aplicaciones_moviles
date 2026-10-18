@@ -4,6 +4,7 @@ import { cargarServicios } from '../servicios/clima.js';
 import { nav, enlazarNav } from './nav.js';
 
 let editandoId = null;
+let internosCargados = [];
 
 // Pantalla de internos: formulario, movimientos, tabla y widgets de clima y mapa
 export async function vistaPrincipal() {
@@ -28,23 +29,35 @@ export async function vistaPrincipal() {
         <div><label>Apellido materno</label><input name="apellido_materno" required></div>
         <div><label>Nombres</label><input name="nombres" required></div>
         <div><label>Piso</label><select name="piso">${state.config.pisos.map((nombrePiso) => `<option>${nombrePiso}</option>`).join('')}</select></div>
-        <div><label>Celda (1-10)</label><input name="celda" type="number" value="1"></div>
+        <div><label>Celda (1-10)</label><input name="celda" type="number" min="1" max="10" value="1"></div>
       </form>
-      <button class="btn" form="f-interno" id="btn-guardar">Guardar</button>
-      <button class="btn sec" id="btn-cancelar" hidden>Cancelar edición</button>
+      <p id="aviso-legajo" style="margin-top:0.75rem; color:#f87171; font-weight:500;" hidden>
+        Ya existe un interno con ese legajo: valor duplicado.
+      </p>
+      <div style="margin-top:1rem; display:flex; gap:0.5rem;">
+        <button class="btn sec" form="f-interno" id="btn-guardar" disabled>Guardar</button>
+        <button class="btn sec" id="btn-cancelar" hidden>Cancelar edición</button>
+      </div>
     </div>` : ''}
 
     <div class="card">
       <h2>Registrar movimiento</h2>
       <form id="f-mov" class="grid">
         <div><label>Interno</label><select name="interno"></select></div>
-        <div><label>Actividad</label>
-          <select name="actividad"><option value="">Seleccione…</option>
-            ${Object.keys(state.config.actividades).map((actividad) => `<option>${actividad}</option>`).join('')}</select></div>
-        <div><label>Destino</label><select name="subactividad"></select></div>
+        <div id="campos-actividad" style="display:contents">
+          <div><label>Actividad</label>
+            <select name="actividad"><option value="">Seleccione…</option>
+              ${Object.keys(state.config.actividades).map((actividad) => `<option>${actividad}</option>`).join('')}</select></div>
+          <div><label>Destino</label><select name="subactividad"></select></div>
+        </div>
       </form>
-      <button class="btn" id="btn-salida">Registrar salida</button>
-      <button class="btn sec" id="btn-regreso">Registrar regreso</button>
+      <p id="aviso-salida" style="margin-top:0.75rem; color:#f87171; font-weight:500;" hidden>
+        El interno tiene una salida pendiente de regreso.
+      </p>
+      <div style="margin-top:1rem; display:flex; gap:0.5rem;">
+        <button class="btn" id="btn-salida" hidden>Registrar salida</button>
+        <button class="btn" id="btn-regreso" hidden>Registrar regreso</button>
+      </div>
     </div>
 
     <div class="card">
@@ -70,6 +83,7 @@ export async function cargarInternos() {
   // encodeURIComponent escapa el texto de búsqueda para ponerlo en la URL
   const textoBusqueda = encodeURIComponent(seleccionar('#buscar').value.trim());
   let internos = await api('/internos?q=' + textoBusqueda);
+  internosCargados = internos;
   const puedeEditar = ['admin', 'encargado'].includes(state.usuario.rol);
 
   // Filtra en memoria si se seleccionó un piso específico
@@ -79,7 +93,7 @@ export async function cargarInternos() {
   }
 
   // Lista desplegable del formulario de movimientos
-  seleccionar('[name=interno]').innerHTML = internos.map((interno) =>
+  seleccionar('[name=interno]').innerHTML = '<option value="">Seleccione…</option>' + internos.map((interno) =>
     `<option value="${interno.id}">${esc(interno.legajo)} · ${esc(interno.apellido_paterno)}, ${esc(interno.nombres)}</option>`).join('');
 
   const filas = internos.map((interno) => `
@@ -107,6 +121,7 @@ export async function cargarInternos() {
     seleccionar('#titulo-form').textContent = 'Modificar interno ' + interno.legajo;
     seleccionar('#btn-cancelar').hidden = false;
     formulario.scrollIntoView({ behavior: 'smooth' });
+    validarFormularioInterno()
   }));
 
   // Eliminar (DELETE)
@@ -120,12 +135,75 @@ export async function cargarInternos() {
   })));
 }
 
+// Comprueba que todos los campos obligatorios tengan valor y que el legajo no esté duplicado
+function validarFormularioInterno() {
+  const formulario = seleccionar('#f-interno');
+  if (!formulario) return;
+
+  const legajo = formulario.legajo.value.trim();
+  const apellidoPaterno = formulario.apellido_paterno.value.trim();
+  const apellidoMaterno = formulario.apellido_materno.value.trim();
+  const nombres = formulario.nombres.value.trim();
+  const celda = formulario.celda.value.trim();
+  const aviso = seleccionar('#aviso-legajo');
+  const btnGuardar = seleccionar('#btn-guardar');
+  const esDuplicado = internosCargados.some((i) => i.legajo === legajo && i.id !== editandoId);
+  if (aviso) aviso.hidden = !esDuplicado || legajo === '';
+  const camposCompletos = 
+    legajo !== '' && 
+    apellidoPaterno !== '' && 
+    apellidoMaterno !== '' && 
+    nombres !== '' && 
+    celda !== '' && 
+    Number(celda) >= 1 && 
+    Number(celda) <= 10;
+
+  const esValido = camposCompletos && !esDuplicado;
+
+  if (btnGuardar) {
+    btnGuardar.disabled = !esValido;
+    if (esValido) {
+      btnGuardar.classList.remove('sec'); // Vuelve al azul principal
+    } else {
+      btnGuardar.classList.add('sec');    // Se pone gris
+    }
+  }
+}
+
+// Desactiva actividad/destino si el interno seleccionado ya está fuera de su celda
+function actualizarFormularioMovimiento() {
+  const formulario = seleccionar('#f-mov');
+  if (!formulario || !formulario.interno) return;
+  const idSeleccionado = formulario.interno.value ? Number(formulario.interno.value) : null;
+  const aviso = seleccionar('#aviso-salida');
+  const btnSalida = seleccionar('#btn-salida');
+  const btnRegreso = seleccionar('#btn-regreso');
+  if (!idSeleccionado) {
+    formulario.actividad.disabled = true;
+    formulario.subactividad.disabled = true;
+    formulario.actividad.value = '';
+    formulario.subactividad.innerHTML = '';
+    if (aviso) aviso.hidden = true;
+    if (btnSalida) btnSalida.hidden = true;
+    if (btnRegreso) btnRegreso.hidden = true;
+    return;
+  }
+  const interno = internosCargados.find((item) => item.id === idSeleccionado);
+  const yaSalio = Boolean(interno && interno.ubicacion !== 'En celda');
+  formulario.actividad.disabled = yaSalio;
+  formulario.subactividad.disabled = yaSalio;
+  if (aviso) aviso.hidden = !yaSalio;
+  if (btnSalida) btnSalida.hidden = yaSalio;
+  if (btnRegreso) btnRegreso.hidden = !yaSalio;
+}
+
 // Devuelve el formulario al modo alta (POST)
 export function cancelarEdicion() {
   editandoId = null;
   seleccionar('#f-interno').reset();
   seleccionar('#titulo-form').textContent = 'Alta de interno';
   seleccionar('#btn-cancelar').hidden = true;
+  validarFormularioInterno();
 }
 
 // ---------- Eventos de la pantalla principal ----------
@@ -152,11 +230,25 @@ export function enlazarEventos(puedeEditar) {
       cancelarEdicion();
       await cargarInternos();
     });
+    seleccionar('#f-interno').oninput = (evento) => {
+      const formulario = evento.currentTarget;
+      if (evento.target.name === 'celda') {
+        if (Number(formulario.celda.value) > 10) formulario.celda.value = 10;
+        if (Number(formulario.celda.value) < 1 && formulario.celda.value !== '') formulario.celda.value = 1;
+      }
+      validarFormularioInterno();
+    };
     seleccionar('#btn-cancelar').onclick = cancelarEdicion;
   }
 
   const formulario = seleccionar('#f-mov');
   // Al elegir una actividad se cargan sus destinos
+  formulario.actividad.onchange = () => {
+    formulario.subactividad.innerHTML = (state.config.actividades[formulario.actividad.value] || []).map((destino) => `<option>${destino}</option>`).join('');
+  };
+
+  // Evalúa si el interno seleccionado ya está afuera
+  formulario.interno.onchange = actualizarFormularioMovimiento;
   formulario.actividad.onchange = () => {
     formulario.subactividad.innerHTML = (state.config.actividades[formulario.actividad.value] || []).map((destino) => `<option>${destino}</option>`).join('');
   };
