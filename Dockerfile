@@ -7,8 +7,9 @@ RUN apt-get update \
     && docker-php-ext-install -j"$(nproc)" pdo_mysql mbstring \
     && apt-get purge -y --auto-remove libonig-dev \
     && rm -rf /var/lib/apt/lists/* \
-    && for mpm in mpm_event mpm_worker; do \
-        if [ -e "/etc/apache2/mods-enabled/${mpm}.load" ]; then a2dismod "$mpm"; fi; \
+    && for module in /etc/apache2/mods-enabled/mpm_*.load; do \
+        [ -e "$module" ] || continue; \
+        a2dismod "$(basename "$module" .load)"; \
     done \
     && a2enmod mpm_prefork rewrite \
     && sed -ri "s!/var/www/html!${APACHE_DOCUMENT_ROOT}!g" /etc/apache2/sites-available/000-default.conf \
