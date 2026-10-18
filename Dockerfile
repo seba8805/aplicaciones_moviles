@@ -7,9 +7,10 @@ RUN apt-get update \
     && docker-php-ext-install -j"$(nproc)" pdo_mysql mbstring \
     && apt-get purge -y --auto-remove libonig-dev \
     && rm -rf /var/lib/apt/lists/* \
-    # Deshabilitar cualquier MPM precargado por la imagen base para evitar
+    # Eliminar cualquier MPM precargado por la imagen base para evitar
     # "AH00534: apache2: Configuration error: More than one MPM loaded."
-    && a2dismod mpm_event mpm_worker mpm_prefork 2>/dev/null || true \
+    # Luego se activa únicamente mpm_prefork.
+    && rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf \
     && a2enmod mpm_prefork rewrite \
     && sed -ri "s!/var/www/html!${APACHE_DOCUMENT_ROOT}!g" /etc/apache2/sites-available/000-default.conf \
     && printf '<Directory /var/www/html/public>\n    AllowOverride All\n    Require all granted\n</Directory>\n' > /etc/apache2/conf-available/public.conf \
