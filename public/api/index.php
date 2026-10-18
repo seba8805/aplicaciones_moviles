@@ -1,12 +1,14 @@
 <?php
 declare(strict_types=1); // fuerza tipado estricto
 
+// Carga las variables de entorno
+require __DIR__ . '/config.php';
+
 // Aplicamos la configuracion del CORS
 require __DIR__ . '/cors.php';
 aplicarCors();
 
 // Carga las dependencias de la API antes de despachar las rutas.
-require __DIR__ . '/config.php';
 require __DIR__ . '/errores.php';
 require __DIR__ . '/conexion.php';
 require __DIR__ . '/utilidades.php';

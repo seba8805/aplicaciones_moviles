@@ -5,7 +5,17 @@ declare(strict_types=1);
 function aplicarCors(): void
 {
     // Lista de origines permitidos para usar la API
-    $origenesPermitidos = [
+    $origenesStr = getenv('ORIGENES_PERMITIDOS');
+    if ($origenesStr !== false && $origenesStr !== '') {
+        $origenesLista = explode(',', $origenesStr);
+        $origenesPermitidos = [];
+        foreach ($origenesLista as $origen) {
+            if (trim($origen) !== '') {
+                $origenesPermitidos[] = trim($origen);
+            }
+        }
+    } else {
+        $origenesPermitidos = [
         'http://localhost',
         'https://localhost',
         'http://127.0.0.1',
@@ -14,7 +24,8 @@ function aplicarCors(): void
         'https://localhost:8000',
         'http://127.0.0.1:8000',
         'https://127.0.0.1:8000',
-    ];
+        ];
+    }
 
     // Obtiene el origen
     $origen = $_SERVER['HTTP_ORIGIN'] ?? '';
