@@ -1,5 +1,18 @@
-:8080
+{
+	frankenphp
+}
 
-root * /public
+:{$PORT:8080} {
+	root * /app/public
+	encode zstd gzip
 
-file_server
+	@api path /api /api/*
+	handle @api {
+		uri strip_prefix /api
+		root * /app/public/api
+		php_server
+	}
+
+	try_files {path} {path}/ /index.html
+	file_server
+}
