@@ -1,4 +1,8 @@
-aplicacionesmoviles-production.up.railway.app
+{
+    auto_https disable_redirects
+}
+
+:8080
 
 root * /public
 
