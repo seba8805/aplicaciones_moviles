@@ -31,10 +31,10 @@ export async function vistaPrincipal() {
         <div><label>Piso</label><select name="piso">${state.config.pisos.map((nombrePiso) => `<option>${nombrePiso}</option>`).join('')}</select></div>
         <div><label>Celda (1-10)</label><input name="celda" type="number" min="1" max="10" value="1"></div>
       </form>
-      <p id="aviso-legajo" style="margin-top:0.75rem; color:#f87171; font-weight:500;" hidden>
+      <p id="aviso-legajo" class="aviso-error" hidden>
         Ya existe un interno con ese legajo: valor duplicado.
       </p>
-      <div style="margin-top:1rem; display:flex; gap:0.5rem;">
+      <div class="btn-group">
         <button class="btn sec" form="f-interno" id="btn-guardar" disabled>Guardar</button>
         <button class="btn sec" id="btn-cancelar" hidden>Cancelar edición</button>
       </div>
@@ -44,17 +44,17 @@ export async function vistaPrincipal() {
       <h2>Registrar movimiento</h2>
       <form id="f-mov" class="grid">
         <div><label>Interno</label><select name="interno"></select></div>
-        <div id="campos-actividad" style="display:contents">
+        <div id="campos-actividad" class="campos-actividad">
           <div><label>Actividad</label>
             <select name="actividad"><option value="">Seleccione…</option>
               ${Object.keys(state.config.actividades).map((actividad) => `<option>${actividad}</option>`).join('')}</select></div>
           <div><label>Destino</label><select name="subactividad"></select></div>
         </div>
       </form>
-      <p id="aviso-salida" style="margin-top:0.75rem; color:#f87171; font-weight:500;" hidden>
+      <p id="aviso-salida" class="aviso-error" hidden>
         El interno tiene una salida pendiente de regreso.
       </p>
-      <div style="margin-top:1rem; display:flex; gap:0.5rem;">
+      <div class="btn-group">
         <button class="btn" id="btn-salida" hidden>Registrar salida</button>
         <button class="btn" id="btn-regreso" hidden>Registrar regreso</button>
       </div>
@@ -62,30 +62,30 @@ export async function vistaPrincipal() {
 
     <div class="card">
       <h2>Internos</h2>
-      <div style="display:flex; gap:0.5rem; flex-wrap:wrap">
-        <input id="buscar" style="flex:1" placeholder="Buscar por legajo, apellido o nombre…">
-        <select id="filtro-piso" style="max-width:200px">
+      <div class="layout-row">
+        <input id="buscar" class="input-flex" placeholder="Buscar por legajo, apellido o nombre…">
+        <select id="filtro-piso" class="select-piso">
           <option value="">Todos los pisos</option>
           ${state.config.pisos.map((piso) => `<option value="${piso}">${piso}</option>`).join('')}
         </select>
       </div>
-      <div id="tabla" style="margin-top:1rem"></div>
+      <div id="tabla" class="mt-1"></div>
     </div>
 
     <!-- Confirmación de eliminación -->
-    <div id="modal-eliminar" style="position:fixed; inset:0; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; z-index:9999;" hidden>
-      <div style="background:#1e293b; border:1px solid #334155; border-radius:8px; padding:1.5rem; max-width:420px; width:90%; box-shadow:0 10px 25px rgba(0,0,0,0.5);">
-        <h3 style="margin:0 0 0.5rem; font-size:1.15rem; color:#f8fafc;">¿Dar de baja a este interno?</h3>
-        <p style="margin:0 0 1.25rem; font-size:0.9rem; color:#94a3b8; line-height:1.4;">
+    <div id="modal-eliminar" class="overlay-fixed" hidden>
+      <div class="modal-card">
+        <h3 class="modal-titulo">¿Dar de baja a este interno?</h3>
+        <p class="modal-texto">
           Esta acción es permanente y eliminará todos sus movimientos.
         </p>
-        <div style="margin-bottom:1.25rem;">
-          <label style="display:block; font-size:0.8rem; color:#cbd5e1; margin-bottom:0.25rem;">Motivo de la baja (opcional):</label>
-          <input id="motivo-baja" value="Traslado" style="width:100%; box-sizing:border-box;">
+        <div class="campo-modal">
+          <label class="etiqueta-modal">Motivo de la baja (opcional):</label>
+          <input id="motivo-baja" value="Traslado" class="motivo-modal">
         </div>
-        <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+        <div class="acciones-modal">
           <button type="button" class="btn sec" id="btn-cancelar-eliminar">Cancelar</button>
-          <button type="button" class="btn" id="btn-confirmar-eliminar" style="background:#ef4444; border-color:#dc2626;">Eliminar</button>
+          <button type="button" class="btn btn-eliminar" id="btn-confirmar-eliminar">Eliminar</button>
         </div>
       </div>
     </div>`;

@@ -6,7 +6,7 @@ import { tabla } from './tabla.js';
 // Historial de altas y bajas
 export async function vistaHistorial() {
   state.app.innerHTML = `${nav('historial')}<div class="card"><h2>Historial de altas y bajas</h2>
-    <input id="filtro" placeholder="Filtrar por legajo…"><div id="hist" style="margin-top:1rem"></div></div>`;
+    <input id="filtro" placeholder="Filtrar por legajo…"><div id="hist" class="mt-1"></div></div>`;
   enlazarNav();
 
   const cargar = run(async () => {

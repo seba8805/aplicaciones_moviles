@@ -14,7 +14,7 @@ export async function cargarServicios() {
 
     seleccionar('#clima').innerHTML = clima
       ? `<h2>Clima${ubicacion ? ' · ' + esc(ubicacion.nombre) : ''}</h2>
-         <b style="font-size:2rem">${clima.temperatura} °C</b>
+         <b class="temp-grande">${clima.temperatura} °C</b>
          <p>${CLIMA[clima.codigo] || 'Condición ' + clima.codigo} · viento ${clima.viento} km/h</p>`
       : '<h2>Clima</h2><p>Dato no disponible por el momento.</p>';
 

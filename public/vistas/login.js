@@ -20,7 +20,7 @@ export function vistaLogin() {
       <h1>Movimientos Internos<br>SPB</h1>
       <label>Usuario</label><input name="usuario" autocomplete="username" required>
       <label>Contraseña</label><input name="password" type="password" autocomplete="current-password" required>
-      <button class="btn" style="margin-top:1.2rem">Iniciar sesión</button>
+      <button class="btn btn-login">Iniciar sesión</button>
     </form>`;
 
   seleccionar('#f').onsubmit = run(async (evento) => {
