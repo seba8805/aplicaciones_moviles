@@ -7,11 +7,14 @@ export async function salir(silencioso) {
   if (!silencioso) await api('/logout', { method: 'POST' }).catch(() => {});
   state.usuario = null;
   seleccionar('#topbar').hidden = true;
+  seleccionar('#who').textContent = '';
   vistaLogin();
 }
 
 // Pantalla de login: envía usuario y contraseña a POST /api/login
 export function vistaLogin() {
+  seleccionar('#topbar').hidden = true;
+  seleccionar('#who').textContent = '';
   state.app.innerHTML = `
     <form class="card center" id="f">
       <h1>Movimientos Internos<br>SPB</h1>

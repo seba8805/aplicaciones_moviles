@@ -248,6 +248,27 @@ function actualizarFormularioMovimiento() {
   if (aviso) aviso.hidden = !yaSalio;
   if (btnSalida) btnSalida.hidden = yaSalio;
   if (btnRegreso) btnRegreso.hidden = !yaSalio;
+
+  // Si el interno ya está afuera, mostrar en qué actividad/destino se encuentra
+  if (yaSalio && interno) {
+    formulario.actividad.value = interno.actividad || '';
+    formulario.subactividad.innerHTML = (state.config.actividades[interno.actividad] || []).map((destino) => `<option>${destino}</option>`).join('');
+    formulario.subactividad.value = interno.subactividad || '';
+  } else if (!yaSalio) {
+    formulario.actividad.value = '';
+    formulario.subactividad.innerHTML = '';
+  }
+}
+
+// Limpia el formulario de movimiento y oculta el aviso y los botones
+// tras registrar una salida o un regreso exitoso.
+function resetFormularioMovimiento() {
+  const formulario = seleccionar('#f-mov');
+  if (!formulario) return;
+  formulario.interno.value = '';
+  formulario.actividad.value = '';
+  formulario.subactividad.innerHTML = '';
+  actualizarFormularioMovimiento();
 }
 
 // Devuelve el formulario al modo alta (POST)
@@ -313,11 +334,13 @@ export function enlazarEventos(puedeEditar) {
     });
     toast('Salida registrada');
     await cargarInternos();
+    resetFormularioMovimiento();
   });
 
   seleccionar('#btn-regreso').onclick = run(async () => {
     await api(`/internos/${formulario.interno.value}/regreso`, { method: 'POST', body: {} });
     toast('Regreso registrado');
     await cargarInternos();
+    resetFormularioMovimiento();
   });
 }
